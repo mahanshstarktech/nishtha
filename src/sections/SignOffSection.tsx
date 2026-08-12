@@ -160,6 +160,25 @@ export const SignOffSection: React.FC<SignOffSectionProps> = ({
           🐾🐾🐾
         </motion.div>
       </div>
+
+      {/* Made with love footer */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 0.6 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.8, duration: 1 }}
+        style={{
+          position: 'absolute',
+          bottom: '1.5rem',
+          fontSize: '0.75rem',
+          color: '#8a7a9a',
+          letterSpacing: '0.02em',
+          textAlign: 'center',
+          width: '100%',
+        }}
+      >
+        Made with ❤️ By Mahansh Gaur
+      </motion.div>
     </section>
   );
 };
