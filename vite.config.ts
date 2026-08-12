@@ -7,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite'
 // e.g. base: '/nishtha-trek/' 
 // Leave as '/' for local dev or Cloudflare Pages
 export default defineConfig({
-  base: '/',
+  base: '/nishtha/',
   plugins: [
     react(),
     tailwindcss(),
