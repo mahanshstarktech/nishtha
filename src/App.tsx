@@ -82,7 +82,7 @@ function App() {
     };
     const target = targets[phase];
     if (target) {
-      setTimeout(() => scrollToSection(target, lenisRef.current), 200);
+      setTimeout(() => scrollToSection(target, lenisRef.current), 350);
     }
   }, [phase]);
 

@@ -7,397 +7,179 @@ interface CatCharacterProps {
   size?: number;
 }
 
-// ─── Pixar-Style Mouth Paths ──────────────────────────────────────────────────
-// Positioned relative to a face centered at (100, 100) with nose at y≈120
-const MOUTH_PATHS: Record<CatMood, string> = {
-  'happy':       'M 86 128 Q 93 138 100 136 Q 107 138 114 128',
-  'content':     'M 88 130 Q 94 136 100 134 Q 106 136 112 130',
-  'small-smile': 'M 90 131 Q 95 135 100 133 Q 105 135 110 131',
-  'neutral':     'M 90 131 Q 100 132 110 131',
-  'sad':         'M 88 136 Q 100 128 112 136',
-  'very-sad':    'M 86 138 Q 100 126 114 138',
-  'dance':       'M 84 128 Q 92 140 100 137 Q 108 140 116 128',
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Bongo-Cat-style SVG — white peeking cat with thick outlines, pink paw beans,
+   and the signature ω mouth.  Moods are expressed through:
+     • eye ry  (squint ↔ round ↔ big puppy eyes)
+     • mouth d (ω ↔ smile ↔ frown)
+     • blush opacity
+     • body tilt / bounce
+     • optional tear
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+// ── Mouth paths per mood ──────────────────────────────────────────────────────
+const MOUTH: Record<CatMood, string> = {
+  happy:         'M 142,103 Q 151,117 159,107 Q 160,104 161,107 Q 169,117 178,103',
+  content:       'M 145,104 Q 152,114 159,107 Q 160,105 161,107 Q 168,114 175,104',
+  'small-smile': 'M 148,105 Q 154,112 160,108 Q 166,112 172,105',
+  neutral:       'M 148,106 Q 160,108 172,106',
+  sad:           'M 146,110 Q 160,100 174,110',
+  'very-sad':    'M 144,113 Q 160,97 176,113',
+  dance:         'M 140,102 Q 149,118 158,107 Q 160,103 162,107 Q 171,118 180,102',
 };
 
-// ─── Pupil Y offset per mood ──────────────────────────────────────────────────
-const PUPIL_Y: Record<CatMood, number> = {
-  'happy': 0, 'content': 0, 'small-smile': 1, 'neutral': 2,
-  'sad': 3, 'very-sad': 4, 'dance': -1,
+// ── Eye ry (squint = small, normal = 7, puppy = big) ─────────────────────────
+const EYE_RY: Record<CatMood, number> = {
+  happy: 2.5, content: 6.5, 'small-smile': 6, neutral: 7,
+  sad: 7, 'very-sad': 8.5, dance: 2,
 };
 
-// ─── Eye openness (scaleY of eye white) ───────────────────────────────────────
-const EYE_SCALE_Y: Record<CatMood, number> = {
-  'happy': 1, 'content': 0.92, 'small-smile': 0.85, 'neutral': 1,
-  'sad': 0.88, 'very-sad': 0.82, 'dance': 0.78,
+// ── Blush opacity ─────────────────────────────────────────────────────────────
+const BLUSH: Record<CatMood, number> = {
+  happy: 0.55, content: 0.45, 'small-smile': 0.4, neutral: 0.2,
+  sad: 0.3, 'very-sad': 0.35, dance: 0.65,
 };
 
-// ─── Iris size (scale of iris) ────────────────────────────────────────────────
-const IRIS_SCALE: Record<CatMood, number> = {
-  'happy': 1, 'content': 1, 'small-smile': 1, 'neutral': 1.12,
-  'sad': 1.15, 'very-sad': 1.2, 'dance': 0.95,
-};
+const spring = { type: 'spring' as const, stiffness: 220, damping: 20 };
 
-// ─── Eyebrow rotation ────────────────────────────────────────────────────────
-const BROW_ANGLE: Record<CatMood, { left: number; right: number }> = {
-  'happy':       { left: 0, right: 0 },
-  'content':     { left: 0, right: 0 },
-  'small-smile': { left: -3, right: 3 },
-  'neutral':     { left: 8, right: -8 },
-  'sad':         { left: 12, right: -12 },
-  'very-sad':    { left: 16, right: -16 },
-  'dance':       { left: -5, right: 5 },
-};
-
-// ─── Blush opacity ────────────────────────────────────────────────────────────
-const BLUSH_OP: Record<CatMood, number> = {
-  'happy': 0.6, 'content': 0.45, 'small-smile': 0.4, 'neutral': 0.2,
-  'sad': 0.35, 'very-sad': 0.4, 'dance': 0.7,
-};
-
-const spring = { type: 'spring' as const, stiffness: 240, damping: 22 };
-
-export const CatCharacter: React.FC<CatCharacterProps> = ({ mood, size = 200 }) => {
+export const CatCharacter: React.FC<CatCharacterProps> = ({ mood, size = 220 }) => {
   const isDancing = mood === 'dance';
   const isVerySad = mood === 'very-sad';
-  const isSadOrWorse = mood === 'sad' || mood === 'very-sad';
+  const isSad     = mood === 'sad' || isVerySad;
+  const height    = size * (170 / 320);           // keep bongo-cat aspect ratio
 
   return (
     <motion.div
-      style={{ width: size, height: size * 1.15 }}
-      className={isDancing ? 'cat-dance' : ''}
-      animate={isDancing ? {} : { rotate: mood === 'small-smile' ? -3 : 0 }}
-      transition={spring}
+      style={{ width: size, height }}
+      animate={
+        isDancing
+          ? { y: [0, -8, 0, -5, 0], rotate: [0, -3, 0, 3, 0] }
+          : isSad
+            ? { rotate: -3 }
+            : { rotate: 0 }
+      }
+      transition={
+        isDancing
+          ? { duration: 0.55, repeat: Infinity, ease: 'easeInOut' }
+          : spring
+      }
     >
       <svg
-        viewBox="0 0 200 230"
+        viewBox="0 0 320 170"
         width="100%"
         height="100%"
         xmlns="http://www.w3.org/2000/svg"
-        aria-label={`Cat feeling ${mood}`}
+        aria-label={`Bongo cat feeling ${mood}`}
         role="img"
       >
-        <defs>
-          {/* Head gradient — warm cream */}
-          <radialGradient id="head-fill" cx="45%" cy="35%" r="65%">
-            <stop offset="0%" stopColor="#fff5eb" />
-            <stop offset="70%" stopColor="#ffe8d0" />
-            <stop offset="100%" stopColor="#f5d4b0" />
-          </radialGradient>
-
-          {/* Body gradient */}
-          <radialGradient id="body-fill" cx="50%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#fff0e0" />
-            <stop offset="100%" stopColor="#f0d5b5" />
-          </radialGradient>
-
-          {/* Iris gradient — warm amber/golden */}
-          <radialGradient id="iris-grad" cx="42%" cy="38%" r="58%">
-            <stop offset="0%" stopColor="#e8b84a" />
-            <stop offset="50%" stopColor="#c8952e" />
-            <stop offset="100%" stopColor="#8b6914" />
-          </radialGradient>
-
-          {/* Orange patch gradient */}
-          <radialGradient id="patch-fill" cx="50%" cy="40%" r="60%">
-            <stop offset="0%" stopColor="#f0b878" />
-            <stop offset="100%" stopColor="#d9975a" />
-          </radialGradient>
-
-          {/* Soft shadow */}
-          <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
-            <feOffset dx="0" dy="2" />
-            <feComponentTransfer><feFuncA type="linear" slope="0.12" /></feComponentTransfer>
-            <feMerge>
-              <feMergeNode />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
-        {/* ── Tail ──────────────────────────────────────────────────── */}
-        <motion.path
-          d="M 112 198 Q 148 210 158 188 Q 166 168 145 174"
-          fill="none"
-          stroke="#e0a06a"
-          strokeWidth="7"
-          strokeLinecap="round"
-          animate={{
-            rotate: isDancing
-              ? [0, 20, -20, 15, -15, 0]
-              : (mood === 'happy' ? [0, 12, -6, 10, 0] : 0),
-          }}
-          transition={isDancing
-            ? { duration: 0.5, repeat: Infinity, ease: 'easeInOut' }
-            : { duration: 2.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }
-          }
-          style={{ transformOrigin: '112px 198px' }}
+        {/* ── Table / surface line ─────────────────────────────── */}
+        <line
+          x1="15" y1="128" x2="305" y2="128"
+          stroke="#2d2d2d" strokeWidth="3.5" strokeLinecap="round"
         />
 
-        {/* ── Body (small — Pixar proportions) ───────────────────────── */}
-        <ellipse cx="100" cy="195" rx="36" ry="28" fill="url(#body-fill)" filter="url(#soft-shadow)" />
-        {/* Body stripe */}
-        <ellipse cx="108" cy="193" rx="20" ry="16" fill="url(#patch-fill)" opacity="0.35" />
-
-        {/* ── Front paws ─────────────────────────────────────────────── */}
-        <AnimatePresence>
-          {isSadOrWorse ? (
-            <motion.g
-              key="paws-clasped"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ellipse cx="88" cy="218" rx="12" ry="8" fill="#ffe8d0" stroke="#e8c8a0" strokeWidth="1" />
-              <ellipse cx="112" cy="218" rx="12" ry="8" fill="#ffe8d0" stroke="#e8c8a0" strokeWidth="1" />
-            </motion.g>
-          ) : (
-            <motion.g
-              key="paws-normal"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <ellipse cx="78" cy="218" rx="11" ry="7" fill="#ffe8d0" stroke="#e8c8a0" strokeWidth="1" />
-              <ellipse cx="122" cy="218" rx="11" ry="7" fill="#ffe8d0" stroke="#e8c8a0" strokeWidth="1" />
-            </motion.g>
-          )}
-        </AnimatePresence>
-
-        {/* ── Left ear ──────────────────────────────────────────────── */}
-        <motion.g
-          animate={{ rotate: isVerySad ? -8 : (mood === 'sad' ? -4 : 0) }}
-          transition={spring}
-          style={{ transformOrigin: '60px 60px' }}
-        >
-          <path d="M 60 62 L 42 22 L 78 48 Z" fill="#f5d4b0" />
-          <path d="M 60 62 L 48 32 L 74 50 Z" fill="#f7b8c4" opacity="0.7" />
-        </motion.g>
-
-        {/* ── Right ear ─────────────────────────────────────────────── */}
-        <motion.g
-          animate={{ rotate: isVerySad ? 8 : (mood === 'sad' ? 4 : 0) }}
-          transition={spring}
-          style={{ transformOrigin: '140px 60px' }}
-        >
-          <path d="M 140 62 L 158 22 L 122 48 Z" fill="#f5d4b0" />
-          <path d="M 140 62 L 152 32 L 126 50 Z" fill="#f7b8c4" opacity="0.7" />
-        </motion.g>
-
-        {/* ── Head (BIG — Pixar proportions) ──────────────────────────── */}
-        <circle cx="100" cy="100" r="66" fill="url(#head-fill)" filter="url(#soft-shadow)" />
-
-        {/* ── Forehead orange patch ───────────────────────────────────── */}
-        <ellipse cx="112" cy="78" rx="28" ry="22" fill="url(#patch-fill)" opacity="0.3" />
-
-        {/* ── Left eyebrow ──────────────────────────────────────────── */}
-        <motion.line
-          x1="56" y1="72" x2="78" y2="70"
-          stroke="#b08860"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          animate={{ rotate: BROW_ANGLE[mood].left }}
-          transition={spring}
-          style={{ transformOrigin: '67px 71px' }}
+        {/* ── Head + body outline ──────────────────────────────── */}
+        <path
+          d="
+            M 68,128
+            C 46,126 36,112 38,94
+            C 40,70 58,50 82,40
+            L 97,10
+            L 115,42
+            C 132,52 150,56 160,56
+            C 170,56 188,52 205,42
+            L 223,10
+            L 238,40
+            C 262,50 280,70 282,94
+            C 284,112 274,126 252,128
+            Z
+          "
+          fill="white"
+          stroke="#2d2d2d"
+          strokeWidth="3.5"
+          strokeLinejoin="round"
         />
 
-        {/* ── Right eyebrow ─────────────────────────────────────────── */}
-        <motion.line
-          x1="122" y1="70" x2="144" y2="72"
-          stroke="#b08860"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          animate={{ rotate: BROW_ANGLE[mood].right }}
-          transition={spring}
-          style={{ transformOrigin: '133px 71px' }}
-        />
+        {/* ── Inner-ear pink ──────────────────────────────────── */}
+        <path d="M 87,42 L 98,16 L 112,44 Z" fill="#ffb5c5" opacity="0.45" />
+        <path d="M 208,44 L 222,16 L 233,42 Z" fill="#ffb5c5" opacity="0.45" />
 
-        {/* ══════════════════════════════════════════════════════════════
-            LEFT EYE — BIG (the Pixar magic)
-            ══════════════════════════════════════════════════════════════ */}
+        {/* ── Left paw (tilted) ────────────────────────────────── */}
+        <g transform="rotate(-12 68 145)">
+          <ellipse cx="68" cy="146" rx="15" ry="18"
+            fill="white" stroke="#2d2d2d" strokeWidth="3" />
+          <circle cx="60" cy="141" r="3.5" fill="#ffb5c5" />
+          <circle cx="68" cy="138" r="3.5" fill="#ffb5c5" />
+          <circle cx="76" cy="141" r="3.5" fill="#ffb5c5" />
+          <circle cx="68" cy="150" r="5"   fill="#ffb5c5" />
+        </g>
+
+        {/* ── Right paw (tilted) ───────────────────────────────── */}
+        <g transform="rotate(12 252 145)">
+          <ellipse cx="252" cy="146" rx="15" ry="18"
+            fill="white" stroke="#2d2d2d" strokeWidth="3" />
+          <circle cx="244" cy="141" r="3.5" fill="#ffb5c5" />
+          <circle cx="252" cy="138" r="3.5" fill="#ffb5c5" />
+          <circle cx="260" cy="141" r="3.5" fill="#ffb5c5" />
+          <circle cx="252" cy="150" r="5"   fill="#ffb5c5" />
+        </g>
+
+        {/* ── Blush marks ──────────────────────────────────────── */}
         <motion.ellipse
-          cx="75" cy="95"
-          rx="22" ry="22"
-          fill="white"
-          stroke="#e0c8a8"
-          strokeWidth="1.2"
-          animate={{ scaleY: EYE_SCALE_Y[mood] }}
-          transition={spring}
-          style={{ transformOrigin: '75px 95px' }}
-        />
-        {/* Left iris */}
-        <motion.circle
-          cx="77" cy="97"
-          r="14"
-          fill="url(#iris-grad)"
-          animate={{
-            y: PUPIL_Y[mood],
-            scaleY: EYE_SCALE_Y[mood],
-            scale: IRIS_SCALE[mood],
-          }}
-          transition={spring}
-          style={{ transformOrigin: '77px 97px' }}
-        />
-        {/* Left pupil */}
-        <motion.circle
-          cx="77" cy="97"
-          r="7"
-          fill="#1a0e2e"
-          animate={{ y: PUPIL_Y[mood], scaleY: EYE_SCALE_Y[mood] }}
-          transition={spring}
-          style={{ transformOrigin: '77px 97px' }}
-        />
-        {/* Left eye — primary highlight (large, top-left) */}
-        <motion.circle
-          cx="70" cy="89"
-          r="6"
-          fill="white"
-          opacity="0.95"
-          animate={{ y: PUPIL_Y[mood] * 0.5 }}
+          cx="112" cy="100" rx="13" ry="7"
+          fill="#ffb5c5"
+          animate={{ opacity: BLUSH[mood] }}
           transition={spring}
         />
-        {/* Left eye — secondary highlight (small, bottom-right) */}
-        <motion.circle
-          cx="83" cy="103"
-          r="3"
-          fill="white"
-          opacity="0.7"
-          animate={{ y: PUPIL_Y[mood] * 0.5 }}
-          transition={spring}
-        />
-
-        {/* ══════════════════════════════════════════════════════════════
-            RIGHT EYE — BIG (the Pixar magic)
-            ══════════════════════════════════════════════════════════════ */}
         <motion.ellipse
-          cx="125" cy="95"
-          rx="22" ry="22"
-          fill="white"
-          stroke="#e0c8a8"
-          strokeWidth="1.2"
-          animate={{ scaleY: EYE_SCALE_Y[mood] }}
-          transition={spring}
-          style={{ transformOrigin: '125px 95px' }}
-        />
-        {/* Right iris */}
-        <motion.circle
-          cx="123" cy="97"
-          r="14"
-          fill="url(#iris-grad)"
-          animate={{
-            y: PUPIL_Y[mood],
-            scaleY: EYE_SCALE_Y[mood],
-            scale: IRIS_SCALE[mood],
-          }}
-          transition={spring}
-          style={{ transformOrigin: '123px 97px' }}
-        />
-        {/* Right pupil */}
-        <motion.circle
-          cx="123" cy="97"
-          r="7"
-          fill="#1a0e2e"
-          animate={{ y: PUPIL_Y[mood], scaleY: EYE_SCALE_Y[mood] }}
-          transition={spring}
-          style={{ transformOrigin: '123px 97px' }}
-        />
-        {/* Right eye — primary highlight */}
-        <motion.circle
-          cx="116" cy="89"
-          r="6"
-          fill="white"
-          opacity="0.95"
-          animate={{ y: PUPIL_Y[mood] * 0.5 }}
-          transition={spring}
-        />
-        {/* Right eye — secondary highlight */}
-        <motion.circle
-          cx="129" cy="103"
-          r="3"
-          fill="white"
-          opacity="0.7"
-          animate={{ y: PUPIL_Y[mood] * 0.5 }}
+          cx="208" cy="100" rx="13" ry="7"
+          fill="#ffb5c5"
+          animate={{ opacity: BLUSH[mood] }}
           transition={spring}
         />
 
-        {/* ── Tear (very-sad) ────────────────────────────────────────── */}
+        {/* ── Left eye ─────────────────────────────────────────── */}
+        <motion.ellipse
+          cx="135" cy="85" rx="7"
+          fill="#2d2d2d"
+          animate={{ ry: EYE_RY[mood] }}
+          transition={spring}
+        />
+
+        {/* ── Right eye ────────────────────────────────────────── */}
+        <motion.ellipse
+          cx="190" cy="85" rx="7"
+          fill="#2d2d2d"
+          animate={{ ry: EYE_RY[mood] }}
+          transition={spring}
+        />
+
+        {/* ── Tear (very-sad) ──────────────────────────────────── */}
         <AnimatePresence>
           {isVerySad && (
             <motion.path
               key="tear"
-              d="M 62 108 Q 60 116 62 122 Q 64 116 62 108"
-              fill="#9dd4f0"
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 0.85, y: 0 }}
+              d="M 144,93 Q 141,102 144,108 Q 147,102 144,93"
+              fill="#87ceeb"
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 0.8, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
             />
           )}
         </AnimatePresence>
 
-        {/* ── Left blush ────────────────────────────────────────────── */}
-        <motion.ellipse
-          cx="55" cy="112"
-          rx="10" ry="5.5"
-          fill="#f7a8b8"
-          animate={{ opacity: BLUSH_OP[mood] }}
-          transition={spring}
-        />
-
-        {/* ── Right blush ───────────────────────────────────────────── */}
-        <motion.ellipse
-          cx="145" cy="112"
-          rx="10" ry="5.5"
-          fill="#f7a8b8"
-          animate={{ opacity: BLUSH_OP[mood] }}
-          transition={spring}
-        />
-
-        {/* ── Nose (tiny, cute) ──────────────────────────────────────── */}
-        <path
-          d="M 97 120 L 100 124 L 103 120 Z"
-          fill="#f08095"
-          stroke="#e06878"
-          strokeWidth="0.5"
-          strokeLinejoin="round"
-        />
-
-        {/* ── Whiskers ──────────────────────────────────────────────── */}
-        <line x1="40" y1="116" x2="62" y2="118" stroke="#d4b898" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-        <line x1="38" y1="124" x2="62" y2="123" stroke="#d4b898" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-        <line x1="138" y1="118" x2="160" y2="116" stroke="#d4b898" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-        <line x1="138" y1="123" x2="162" y2="124" stroke="#d4b898" strokeWidth="1" strokeLinecap="round" opacity="0.5" />
-
-        {/* ── Mouth (morphs between moods) ───────────────────────────── */}
+        {/* ── Mouth (morphs per mood) ──────────────────────────── */}
         <motion.path
-          d={MOUTH_PATHS[mood]}
+          d={MOUTH[mood]}
           fill="none"
-          stroke="#c07080"
-          strokeWidth="2"
+          stroke="#2d2d2d"
+          strokeWidth="2.8"
           strokeLinecap="round"
-          animate={{ d: MOUTH_PATHS[mood] }}
+          strokeLinejoin="round"
+          animate={{ d: MOUTH[mood] }}
           transition={spring}
         />
-
-        {/* ── Wiping-eye paw (very-sad) ──────────────────────────────── */}
-        <AnimatePresence>
-          {isVerySad && (
-            <motion.ellipse
-              key="wipe"
-              cx="60" cy="107"
-              rx="9" ry="7"
-              fill="#ffe8d0"
-              stroke="#e0c8a0"
-              strokeWidth="1"
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.35, delay: 0.1 }}
-            />
-          )}
-        </AnimatePresence>
       </svg>
     </motion.div>
   );

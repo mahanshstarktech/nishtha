@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { CatCharacter } from '../components/CatCharacter';
 import { ConfettiEffect } from '../components/ConfettiEffect';
+import { ScrollHint } from '../components/ScrollHint';
 
 interface CelebrationSectionProps {
   active: boolean;
@@ -19,11 +20,11 @@ export const CelebrationSection: React.FC<CelebrationSectionProps> = ({
     >
       <ConfettiEffect active={active} />
 
-      <div style={{ textAlign: 'center', maxWidth: 480, width: '100%', padding: '0 1rem' }}>
+      <div style={{ textAlign: 'center', maxWidth: 520, width: '100%', padding: '0 1rem' }}>
 
-        {/* Dancing cat */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem' }}>
-          <CatCharacter mood="dance" size={180} />
+        {/* Dancing bongo cat */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+          <CatCharacter mood="dance" size={260} />
         </div>
 
         {/* Celebration heading */}
@@ -98,6 +99,9 @@ export const CelebrationSection: React.FC<CelebrationSectionProps> = ({
         >
           Just a couple more things... 🐾
         </motion.button>
+
+        {/* Scroll hint */}
+        <ScrollHint />
       </div>
     </section>
   );

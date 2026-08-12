@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../components/GlassCard';
 import { CatCharacter } from '../components/CatCharacter';
+import { ScrollHint } from '../components/ScrollHint';
 import { getAvailableDays } from '../lib/stateTypes';
 
 interface DaySelectSectionProps {
@@ -25,7 +26,7 @@ export const DaySelectSection: React.FC<DaySelectSectionProps> = ({
 
         {/* Cat */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-          <CatCharacter mood="content" size={140} />
+          <CatCharacter mood="content" size={200} />
         </div>
 
         {/* Heading */}
@@ -125,6 +126,9 @@ export const DaySelectSection: React.FC<DaySelectSectionProps> = ({
             </motion.button>
           ))}
         </div>
+
+        {/* Scroll hint (before selection) */}
+        {!dayChoice && <ScrollHint />}
 
         {/* Selection confirmation */}
         <AnimatePresence>

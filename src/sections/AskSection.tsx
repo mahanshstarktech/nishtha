@@ -84,7 +84,7 @@ export const AskSection: React.FC<AskSectionProps> = ({
 
           {/* Cat */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-            <CatCharacter mood={catMood} size={180} />
+            <CatCharacter mood={catMood} size={220} />
           </div>
 
           {/* Question text */}

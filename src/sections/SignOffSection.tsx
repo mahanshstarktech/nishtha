@@ -28,11 +28,10 @@ export const SignOffSection: React.FC<SignOffSectionProps> = ({
 
         {/* Cat */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-          <CatCharacter mood={isNoFinal ? 'content' : 'happy'} size={150} />
+          <CatCharacter mood={isNoFinal ? 'content' : 'happy'} size={240} />
         </div>
 
         {isNoFinal ? (
-          /* ── No-Final Path ─────────────────────────────────────────── */
           <>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -65,7 +64,6 @@ export const SignOffSection: React.FC<SignOffSectionProps> = ({
             </motion.p>
           </>
         ) : (
-          /* ── Yes Path — Heart-touching sign-off ────────────────────── */
           <>
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
@@ -111,7 +109,7 @@ export const SignOffSection: React.FC<SignOffSectionProps> = ({
               </p>
             </motion.div>
 
-            {/* Food + Day recap card */}
+            {/* Recap card */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -147,7 +145,7 @@ export const SignOffSection: React.FC<SignOffSectionProps> = ({
           </>
         )}
 
-        {/* Closing paw row */}
+        {/* Paw trail */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
