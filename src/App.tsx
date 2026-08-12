@@ -4,17 +4,19 @@ import { AnimatedBackground } from './components/AnimatedBackground';
 import { HeroSection } from './sections/HeroSection';
 import { AskSection } from './sections/AskSection';
 import { CelebrationSection } from './sections/CelebrationSection';
+import { DaySelectSection } from './sections/DaySelectSection';
 import { FoodSection } from './sections/FoodSection';
 import { SignOffSection } from './sections/SignOffSection';
 import { useSmootScroll, scrollToSection } from './hooks/useScrollSections';
 import { fireEvent } from './lib/notifications';
 import type { AppState, AppAction } from './lib/stateTypes';
 
-// ─── Reducer ─────────────────────────────────────────────────────────────────
+// ─── Reducer ──────────────────────────────────────────────────────────────────
 
 const initialState: AppState = {
   phase: 'ask',
   noCount: 0,
+  dayChoice: null,
   foodChoice: null,
 };
 
@@ -22,11 +24,9 @@ function reducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'CLICK_NO': {
       if (state.phase !== 'ask') return state;
-      const nextCount = state.noCount + 1;
-      if (nextCount > 5) {
-        return { ...state, phase: 'pivot' };
-      }
-      return { ...state, noCount: nextCount };
+      const next = state.noCount + 1;
+      if (next > 5) return { ...state, phase: 'pivot' };
+      return { ...state, noCount: next };
     }
     case 'CLICK_YES':
       if (state.phase !== 'ask') return state;
@@ -37,9 +37,12 @@ function reducer(state: AppState, action: AppAction): AppState {
     case 'CLICK_PIVOT_NO':
       if (state.phase !== 'pivot') return state;
       return { ...state, phase: 'no-final' };
-    case 'GO_TO_FOOD':
+    case 'GO_TO_DAY_SELECT':
       if (state.phase !== 'yes') return state;
-      return { ...state, phase: 'food' };
+      return { ...state, phase: 'day-select' };
+    case 'SELECT_DAY':
+      if (state.phase !== 'day-select') return state;
+      return { ...state, dayChoice: action.choice, phase: 'food' };
     case 'SELECT_FOOD':
       if (state.phase !== 'food') return state;
       return { ...state, foodChoice: action.choice, phase: 'signoff' };
@@ -48,33 +51,42 @@ function reducer(state: AppState, action: AppAction): AppState {
   }
 }
 
+// ─── Food label lookup ────────────────────────────────────────────────────────
+const FOOD_LABELS: Record<string, string> = {
+  pbj: 'PB & Jam Sandwich',
+  mayo: 'Mayo & Veggie Sandwich',
+  maggi: 'Maggi + Hot Chocolate',
+  'trail-mix': 'Trail Mix & Chocolates',
+};
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 
 function App() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const lenisRef = useSmootScroll();
   const answerNotifiedRef = useRef(false);
+  const dayNotifiedRef    = useRef(false);
   const foodNotifiedRef   = useRef(false);
+  const allDoneNotifiedRef = useRef(false);
 
-  const { phase, noCount, foodChoice } = state;
+  const { phase, noCount, dayChoice, foodChoice } = state;
 
-  // Scroll on phase change
+  // ── Scroll on phase change ───────────────────────────────────────────────
   useEffect(() => {
-    if (phase === 'yes') {
-      setTimeout(() => scrollToSection('section-celebration', lenisRef.current), 150);
-    }
-    if (phase === 'food') {
-      setTimeout(() => scrollToSection('section-food', lenisRef.current), 150);
-    }
-    if (phase === 'no-final') {
-      setTimeout(() => scrollToSection('section-signoff', lenisRef.current), 150);
-    }
-    if (phase === 'signoff') {
-      setTimeout(() => scrollToSection('section-signoff', lenisRef.current), 300);
+    const targets: Record<string, string> = {
+      'yes':        'section-celebration',
+      'day-select': 'section-day-select',
+      'food':       'section-food',
+      'no-final':   'section-signoff',
+      'signoff':    'section-signoff',
+    };
+    const target = targets[phase];
+    if (target) {
+      setTimeout(() => scrollToSection(target, lenisRef.current), 200);
     }
   }, [phase]);
 
-  // Notify on final answer (yes or no-final)
+  // ── Notify: final answer ─────────────────────────────────────────────────
   useEffect(() => {
     if (answerNotifiedRef.current) return;
     if (phase === 'yes' || phase === 'no-final') {
@@ -86,23 +98,43 @@ function App() {
     }
   }, [phase, noCount]);
 
-  // Notify on food choice
+  // ── Notify: day choice ───────────────────────────────────────────────────
+  useEffect(() => {
+    if (dayNotifiedRef.current || !dayChoice) return;
+    dayNotifiedRef.current = true;
+    fireEvent({ answer: 'day-choice', noCount, dayChoice });
+  }, [dayChoice, noCount]);
+
+  // ── Notify: food choice + all-done summary ──────────────────────────────
   useEffect(() => {
     if (foodNotifiedRef.current || !foodChoice) return;
     foodNotifiedRef.current = true;
-    const option = FOOD_OPTIONS_LABELS[foodChoice] ?? foodChoice;
-    fireEvent({
-      answer: 'food-choice',
-      noCount,
-      foodChoice: option,
-    });
-  }, [foodChoice, noCount]);
+    const foodLabel = FOOD_LABELS[foodChoice] ?? foodChoice;
+    fireEvent({ answer: 'food-choice', noCount, foodChoice: foodLabel });
 
-  // Derived visibility flags
+    // Fire the combined "all-done" summary a moment later
+    if (!allDoneNotifiedRef.current && dayChoice) {
+      allDoneNotifiedRef.current = true;
+      setTimeout(() => {
+        fireEvent({
+          answer: 'all-done',
+          noCount,
+          dayChoice,
+          foodChoice: foodLabel,
+        });
+      }, 1500);
+    }
+  }, [foodChoice, noCount, dayChoice]);
+
+  // ── Section visibility ───────────────────────────────────────────────────
   const showAsk         = phase === 'ask' || phase === 'pivot';
-  const showCelebration = phase === 'yes' || phase === 'food' || phase === 'signoff';
-  const showFood        = phase === 'food' || phase === 'signoff';
+  const showCelebration = ['yes', 'day-select', 'food', 'signoff'].includes(phase);
+  const showDaySelect   = ['day-select', 'food', 'signoff'].includes(phase);
+  const showFood        = ['food', 'signoff'].includes(phase);
   const showSignoff     = phase === 'signoff' || phase === 'no-final';
+
+  // Resolve food label for sign-off display
+  const foodLabel = foodChoice ? (FOOD_LABELS[foodChoice] ?? foodChoice) : null;
 
   return (
     <div style={{ position: 'relative', minHeight: '100dvh' }}>
@@ -110,19 +142,15 @@ function App() {
 
       <div style={{ position: 'relative', zIndex: 1 }}>
 
-        {/* ── Hero ─────────────────────────────────────────────────────── */}
+        {/* ── Hero ─────────────────────────────────────────────────── */}
         <HeroSection
           onScrollHintClick={() => scrollToSection('section-ask', lenisRef.current)}
         />
 
-        {/* ── Ask / Pivot ──────────────────────────────────────────────── */}
+        {/* ── Ask / Pivot ──────────────────────────────────────────── */}
         <AnimatePresence>
           {showAsk && (
-            <motion.div
-              key="ask"
-              exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.45 }}
-            >
+            <motion.div key="ask" exit={{ opacity: 0, y: -30 }} transition={{ duration: 0.4 }}>
               <AskSection
                 state={state}
                 onYes={() => dispatch({ type: 'CLICK_YES' })}
@@ -134,7 +162,7 @@ function App() {
           )}
         </AnimatePresence>
 
-        {/* ── Celebration ──────────────────────────────────────────────── */}
+        {/* ── Celebration ──────────────────────────────────────────── */}
         <AnimatePresence>
           {showCelebration && (
             <motion.div
@@ -145,13 +173,32 @@ function App() {
             >
               <CelebrationSection
                 active={showCelebration}
-                onContinue={() => dispatch({ type: 'GO_TO_FOOD' })}
+                onContinue={() => dispatch({ type: 'GO_TO_DAY_SELECT' })}
               />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── Food ──────────────────────────────────────────────────────── */}
+        {/* ── Day Selection ────────────────────────────────────────── */}
+        <AnimatePresence>
+          {showDaySelect && (
+            <motion.div
+              key="day-select"
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.1 }}
+            >
+              <DaySelectSection
+                dayChoice={dayChoice}
+                onSelect={(fullLabel) => {
+                  dispatch({ type: 'SELECT_DAY', choice: fullLabel });
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Food ─────────────────────────────────────────────────── */}
         <AnimatePresence>
           {showFood && (
             <motion.div
@@ -162,15 +209,15 @@ function App() {
             >
               <FoodSection
                 foodChoice={foodChoice}
-                onSelect={(id) => {
-                  dispatch({ type: 'SELECT_FOOD', choice: id });
+                onSelect={(id, label) => {
+                  dispatch({ type: 'SELECT_FOOD', choice: id === 'custom' ? label : id });
                 }}
               />
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* ── Sign-off ─────────────────────────────────────────────────── */}
+        {/* ── Sign-off ─────────────────────────────────────────────── */}
         <AnimatePresence>
           {showSignoff && (
             <motion.div
@@ -181,7 +228,8 @@ function App() {
             >
               <SignOffSection
                 phase={phase}
-                foodChoice={foodChoice}
+                dayChoice={dayChoice}
+                foodChoice={foodLabel}
               />
             </motion.div>
           )}
@@ -191,13 +239,5 @@ function App() {
     </div>
   );
 }
-
-// Label map for notifications
-const FOOD_OPTIONS_LABELS: Record<string, string> = {
-  sandwiches: 'Sandwiches',
-  pasta: 'Pasta',
-  maggi: 'Maggi + hot chocolate',
-  'trail-mix': 'Trail mix & chocolates',
-};
 
 export default App;

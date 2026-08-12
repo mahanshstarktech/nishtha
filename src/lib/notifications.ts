@@ -1,9 +1,5 @@
 // ─── Notification & Persistence Helpers ──────────────────────────────────────
 //
-// These values are read from .env and baked into the client bundle at build time.
-// This is acceptable for a private, unlisted link sent to one person.
-// DO NOT share the link publicly.
-//
 // Fill in your .env file (copy from .env.example):
 //   VITE_TELEGRAM_BOT_TOKEN=your_bot_token_here
 //   VITE_TELEGRAM_CHAT_ID=your_chat_id_here
@@ -27,7 +23,6 @@ export async function notifyTelegram(text: string): Promise<void> {
       body: JSON.stringify({ chat_id: CHAT_ID, text, parse_mode: 'HTML' }),
     });
   } catch (err) {
-    // Fail silently — never block or break the UI
     console.warn('[notify] Telegram send failed:', err);
   }
 }
@@ -37,6 +32,7 @@ export async function notifyTelegram(text: string): Promise<void> {
 export interface LogPayload {
   answer: string;
   noCount: number;
+  dayChoice?: string;
   foodChoice?: string;
   userAgent: string;
 }
@@ -49,7 +45,6 @@ export async function logToSheet(payload: LogPayload): Promise<void> {
   try {
     await fetch(SHEET_URL, {
       method: 'POST',
-      // Apps Script requires text/plain to avoid a CORS preflight on doPost
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         timestamp: new Date().toISOString(),
@@ -66,6 +61,7 @@ export async function logToSheet(payload: LogPayload): Promise<void> {
 export function fireEvent(params: {
   answer: string;
   noCount: number;
+  dayChoice?: string;
   foodChoice?: string;
 }): void {
   const ts = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
@@ -78,15 +74,22 @@ export function fireEvent(params: {
     tgText = `🐾 <b>Nishtha said YES!</b> (${noStr})\n📅 ${ts}`;
   } else if (params.answer === 'no-final') {
     tgText = `😔 Nishtha said no to the trek (${noStr})\n📅 ${ts}`;
-  } else if (params.foodChoice) {
-    tgText = `🍱 Nishtha picked food: <b>${params.foodChoice}</b>\n📅 ${ts}`;
+  } else if (params.answer === 'day-choice' && params.dayChoice) {
+    tgText = `📅 <b>Nishtha picked a day:</b> ${params.dayChoice}\n🕐 ${ts}`;
+  } else if (params.answer === 'food-choice' && params.foodChoice) {
+    tgText = `🍱 <b>Nishtha picked food:</b> ${params.foodChoice}\n🕐 ${ts}`;
+  } else if (params.answer === 'all-done') {
+    tgText = `✅ <b>All done!</b>\n📅 Day: ${params.dayChoice ?? '—'}\n🍱 Food: ${params.foodChoice ?? '—'}\n(${noStr})\n🕐 ${ts}`;
   }
 
-  notifyTelegram(tgText);
-  logToSheet({
-    answer: params.answer,
-    noCount: params.noCount,
-    foodChoice: params.foodChoice,
-    userAgent: navigator.userAgent,
-  });
+  if (tgText) {
+    notifyTelegram(tgText);
+    logToSheet({
+      answer: params.answer,
+      noCount: params.noCount,
+      dayChoice: params.dayChoice,
+      foodChoice: params.foodChoice,
+      userAgent: navigator.userAgent,
+    });
+  }
 }
