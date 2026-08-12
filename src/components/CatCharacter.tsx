@@ -8,36 +8,45 @@ interface CatCharacterProps {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
-   Bongo-Cat-style SVG — white peeking cat with thick outlines, pink paw beans,
-   and the signature ω mouth.  Moods are expressed through:
-     • eye ry  (squint ↔ round ↔ big puppy eyes)
-     • mouth d (ω ↔ smile ↔ frown)
-     • blush opacity
-     • body tilt / bounce
-     • optional tear
+   Bongo Cat — matched to the reference image (reference.png).
+   White peeking cat, thick black outlines, large round eyes with highlight,
+   signature ω mouth, pink paw beans, and concave "waist" silhouette.
+
+   Moods expressed via:  eye ry · mouth d · highlight opacity · blush · tear · tilt
    ═══════════════════════════════════════════════════════════════════════════════ */
 
-// ── Mouth paths per mood ──────────────────────────────────────────────────────
+// ── Mouth paths (ω ↔ smile ↔ frown) ──────────────────────────────────────────
 const MOUTH: Record<CatMood, string> = {
-  happy:         'M 142,103 Q 151,117 159,107 Q 160,104 161,107 Q 169,117 178,103',
-  content:       'M 145,104 Q 152,114 159,107 Q 160,105 161,107 Q 168,114 175,104',
-  'small-smile': 'M 148,105 Q 154,112 160,108 Q 166,112 172,105',
-  neutral:       'M 148,106 Q 160,108 172,106',
-  sad:           'M 146,110 Q 160,100 174,110',
-  'very-sad':    'M 144,113 Q 160,97 176,113',
-  dance:         'M 140,102 Q 149,118 158,107 Q 160,103 162,107 Q 171,118 180,102',
+  happy:         'M 155,106 Q 163,122 172,110 Q 176,106 180,110 Q 189,122 197,106',
+  content:       'M 158,108 Q 165,120 172,111 Q 176,107 180,111 Q 187,120 194,108',
+  'small-smile': 'M 160,109 Q 167,117 174,111 Q 177,109 180,111 Q 187,117 194,109',
+  neutral:       'M 162,110 Q 177,112 192,110',
+  sad:           'M 158,114 Q 177,104 196,114',
+  'very-sad':    'M 156,117 Q 177,100 198,117',
+  dance:         'M 153,105 Q 162,124 171,110 Q 176,105 181,110 Q 190,124 199,105',
 };
 
-// ── Eye ry (squint = small, normal = 7, puppy = big) ─────────────────────────
+// ── Eye ry — rx is fixed at 14; ry squints/rounds/dilates ─────────────────────
 const EYE_RY: Record<CatMood, number> = {
-  happy: 2.5, content: 6.5, 'small-smile': 6, neutral: 7,
-  sad: 7, 'very-sad': 8.5, dance: 2,
+  happy: 3,
+  content: 12,
+  'small-smile': 11,
+  neutral: 14,
+  sad: 14,
+  'very-sad': 15.5,
+  dance: 2.5,
+};
+
+// ── Eye highlight opacity (hide when squinting) ──────────────────────────────
+const HL_OP: Record<CatMood, number> = {
+  happy: 0,  content: 0.95, 'small-smile': 0.9, neutral: 0.95,
+  sad: 0.9,  'very-sad': 0.95,  dance: 0,
 };
 
 // ── Blush opacity ─────────────────────────────────────────────────────────────
 const BLUSH: Record<CatMood, number> = {
-  happy: 0.55, content: 0.45, 'small-smile': 0.4, neutral: 0.2,
-  sad: 0.3, 'very-sad': 0.35, dance: 0.65,
+  happy: 0.45, content: 0.35, 'small-smile': 0.3, neutral: 0,
+  sad: 0.2,  'very-sad': 0.25,  dance: 0.5,
 };
 
 const spring = { type: 'spring' as const, stiffness: 220, damping: 20 };
@@ -46,7 +55,7 @@ export const CatCharacter: React.FC<CatCharacterProps> = ({ mood, size = 220 }) 
   const isDancing = mood === 'dance';
   const isVerySad = mood === 'very-sad';
   const isSad     = mood === 'sad' || isVerySad;
-  const height    = size * (170 / 320);           // keep bongo-cat aspect ratio
+  const height    = size * (180 / 340);   // wide bongo-cat aspect ratio
 
   return (
     <motion.div
@@ -65,7 +74,7 @@ export const CatCharacter: React.FC<CatCharacterProps> = ({ mood, size = 220 }) 
       }
     >
       <svg
-        viewBox="0 0 320 170"
+        viewBox="0 0 340 180"
         width="100%"
         height="100%"
         xmlns="http://www.w3.org/2000/svg"
@@ -74,83 +83,109 @@ export const CatCharacter: React.FC<CatCharacterProps> = ({ mood, size = 220 }) 
       >
         {/* ── Table / surface line ─────────────────────────────── */}
         <line
-          x1="15" y1="128" x2="305" y2="128"
-          stroke="#2d2d2d" strokeWidth="3.5" strokeLinecap="round"
+          x1="10" y1="138" x2="330" y2="138"
+          stroke="#2d2d2d" strokeWidth="4.5" strokeLinecap="round"
         />
 
         {/* ── Head + body outline ──────────────────────────────── */}
         <path
           d="
-            M 68,128
-            C 46,126 36,112 38,94
-            C 40,70 58,50 82,40
-            L 97,10
-            L 115,42
-            C 132,52 150,56 160,56
-            C 170,56 188,52 205,42
-            L 223,10
-            L 238,40
-            C 262,50 280,70 282,94
-            C 284,112 274,126 252,128
+            M 52,138
+            C 28,136 16,118 20,96
+            C 24,72 48,52 78,42
+            L 100,10
+            L 122,44
+            C 142,54 158,58 170,58
+            C 182,58 198,54 218,44
+            L 240,10
+            L 262,42
+            C 292,52 316,72 320,96
+            C 324,118 312,136 288,138
             Z
           "
           fill="white"
           stroke="#2d2d2d"
-          strokeWidth="3.5"
+          strokeWidth="5"
           strokeLinejoin="round"
         />
 
-        {/* ── Inner-ear pink ──────────────────────────────────── */}
-        <path d="M 87,42 L 98,16 L 112,44 Z" fill="#ffb5c5" opacity="0.45" />
-        <path d="M 208,44 L 222,16 L 233,42 Z" fill="#ffb5c5" opacity="0.45" />
+        {/* ── Left inner ear (pink) ───────────────────────────── */}
+        <path d="M 86,44 L 101,16 L 118,44 Z" fill="#ffb5c5" opacity="0.6" />
 
-        {/* ── Left paw (tilted) ────────────────────────────────── */}
-        <g transform="rotate(-12 68 145)">
-          <ellipse cx="68" cy="146" rx="15" ry="18"
-            fill="white" stroke="#2d2d2d" strokeWidth="3" />
-          <circle cx="60" cy="141" r="3.5" fill="#ffb5c5" />
-          <circle cx="68" cy="138" r="3.5" fill="#ffb5c5" />
-          <circle cx="76" cy="141" r="3.5" fill="#ffb5c5" />
-          <circle cx="68" cy="150" r="5"   fill="#ffb5c5" />
+        {/* ── Right inner ear (pink) ──────────────────────────── */}
+        <path d="M 222,44 L 239,16 L 254,44 Z" fill="#ffb5c5" opacity="0.6" />
+
+        {/* ── Left paw ────────────────────────────────────────── */}
+        <g transform="rotate(-15 58 152)">
+          <ellipse cx="58" cy="152" rx="22" ry="26"
+            fill="white" stroke="#2d2d2d" strokeWidth="4.5" />
+          {/* Toe beans */}
+          <circle cx="47" cy="144" r="4.5" fill="#ffb5c5" />
+          <circle cx="58" cy="140" r="4.5" fill="#ffb5c5" />
+          <circle cx="69" cy="144" r="4.5" fill="#ffb5c5" />
+          {/* Big pad */}
+          <circle cx="58" cy="156" r="7.5" fill="#ffb5c5" />
         </g>
 
-        {/* ── Right paw (tilted) ───────────────────────────────── */}
-        <g transform="rotate(12 252 145)">
-          <ellipse cx="252" cy="146" rx="15" ry="18"
-            fill="white" stroke="#2d2d2d" strokeWidth="3" />
-          <circle cx="244" cy="141" r="3.5" fill="#ffb5c5" />
-          <circle cx="252" cy="138" r="3.5" fill="#ffb5c5" />
-          <circle cx="260" cy="141" r="3.5" fill="#ffb5c5" />
-          <circle cx="252" cy="150" r="5"   fill="#ffb5c5" />
+        {/* ── Right paw ───────────────────────────────────────── */}
+        <g transform="rotate(15 282 152)">
+          <ellipse cx="282" cy="152" rx="22" ry="26"
+            fill="white" stroke="#2d2d2d" strokeWidth="4.5" />
+          {/* Toe beans */}
+          <circle cx="271" cy="144" r="4.5" fill="#ffb5c5" />
+          <circle cx="282" cy="140" r="4.5" fill="#ffb5c5" />
+          <circle cx="293" cy="144" r="4.5" fill="#ffb5c5" />
+          {/* Big pad */}
+          <circle cx="282" cy="156" r="7.5" fill="#ffb5c5" />
         </g>
 
-        {/* ── Blush marks ──────────────────────────────────────── */}
+        {/* ── Blush (subtle, mood-driven) ──────────────────────── */}
         <motion.ellipse
-          cx="112" cy="100" rx="13" ry="7"
+          cx="120" cy="104" rx="14" ry="7"
           fill="#ffb5c5"
           animate={{ opacity: BLUSH[mood] }}
           transition={spring}
+          style={{ opacity: BLUSH[mood] }}
         />
         <motion.ellipse
-          cx="208" cy="100" rx="13" ry="7"
+          cx="230" cy="104" rx="14" ry="7"
           fill="#ffb5c5"
           animate={{ opacity: BLUSH[mood] }}
           transition={spring}
+          style={{ opacity: BLUSH[mood] }}
         />
 
-        {/* ── Left eye ─────────────────────────────────────────── */}
+        {/* ══════════════════════════════════════════════════════════
+            EYES — Large circles with white highlights (reference style)
+            ══════════════════════════════════════════════════════════ */}
+
+        {/* Left eye */}
         <motion.ellipse
-          cx="135" cy="85" rx="7"
+          cx="148" cy="92" rx="14"
           fill="#2d2d2d"
           animate={{ ry: EYE_RY[mood] }}
           transition={spring}
         />
+        {/* Left eye highlight */}
+        <motion.circle
+          cx="141" cy="83" r="5"
+          fill="white"
+          animate={{ opacity: HL_OP[mood] }}
+          transition={spring}
+        />
 
-        {/* ── Right eye ────────────────────────────────────────── */}
+        {/* Right eye */}
         <motion.ellipse
-          cx="190" cy="85" rx="7"
+          cx="205" cy="92" rx="14"
           fill="#2d2d2d"
           animate={{ ry: EYE_RY[mood] }}
+          transition={spring}
+        />
+        {/* Right eye highlight */}
+        <motion.circle
+          cx="198" cy="83" r="5"
+          fill="white"
+          animate={{ opacity: HL_OP[mood] }}
           transition={spring}
         />
 
@@ -159,7 +194,7 @@ export const CatCharacter: React.FC<CatCharacterProps> = ({ mood, size = 220 }) 
           {isVerySad && (
             <motion.path
               key="tear"
-              d="M 144,93 Q 141,102 144,108 Q 147,102 144,93"
+              d="M 162,100 Q 159,110 162,118 Q 165,110 162,100"
               fill="#87ceeb"
               initial={{ opacity: 0, y: -5 }}
               animate={{ opacity: 0.8, y: 0 }}
@@ -174,7 +209,7 @@ export const CatCharacter: React.FC<CatCharacterProps> = ({ mood, size = 220 }) 
           d={MOUTH[mood]}
           fill="none"
           stroke="#2d2d2d"
-          strokeWidth="2.8"
+          strokeWidth="3.5"
           strokeLinecap="round"
           strokeLinejoin="round"
           animate={{ d: MOUTH[mood] }}
