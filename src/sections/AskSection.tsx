@@ -124,6 +124,7 @@ export const AskSection: React.FC<AskSectionProps> = ({
                   variant="yes"
                   onClick={onPivotYes}
                   scale={1.0}
+                  width={210}
                 />
                 <PawButton
                   id="btn-pivot-no"
@@ -131,6 +132,7 @@ export const AskSection: React.FC<AskSectionProps> = ({
                   variant="no"
                   onClick={onPivotNo}
                   scale={1.0}
+                  width={180}
                 />
               </>
             ) : (

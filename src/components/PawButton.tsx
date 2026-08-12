@@ -40,15 +40,24 @@ const VARIANT_STYLES = {
  * The invisible hit-target wrapper ensures ≥44×44px tap area
  * even when the visual scale shrinks (for the No button escalation).
  */
-export const PawButton: React.FC<PawButtonProps> = ({
+export const PawButton: React.FC<PawButtonProps & { width?: number }> = ({
   label,
   onClick,
   variant = 'neutral',
   scale = 1,
   id,
   disabled = false,
+  width = 160,
 }) => {
   const v = VARIANT_STYLES[variant];
+
+  // Dynamic layout calculations based on requested width
+  const padWidth = width - 28;
+  const t1x = 14 + padWidth * 0.16;
+  const t2x = 14 + padWidth * 0.38;
+  const t3x = 14 + padWidth * 0.62;
+  const t4x = 14 + padWidth * 0.84;
+  const cx = width / 2;
 
   return (
     /* Outer wrapper — keeps the real tap area large */
@@ -79,8 +88,8 @@ export const PawButton: React.FC<PawButtonProps> = ({
       >
         {/* Paw SVG shape as button background */}
         <svg
-          viewBox="0 0 160 80"
-          width={scale > 1 ? Math.round(160 * Math.min(scale, 1.6)) : 160}
+          viewBox={`0 0 ${width} 80`}
+          width={scale > 1 ? Math.round(width * Math.min(scale, 1.6)) : width}
           height={scale > 1 ? Math.round(80 * Math.min(scale, 1.6)) : 80}
           xmlns="http://www.w3.org/2000/svg"
           style={{ display: 'block', filter: `drop-shadow(${v.shadow})` }}
@@ -97,7 +106,7 @@ export const PawButton: React.FC<PawButtonProps> = ({
 
           {/* Main pad */}
           <rect
-            x="14" y="18" width="132" height="54"
+            x="14" y="18" width={padWidth} height="54"
             rx="27" ry="27"
             fill={`url(#paw-grad-${variant})`}
             stroke="rgba(255,255,255,0.5)"
@@ -105,29 +114,29 @@ export const PawButton: React.FC<PawButtonProps> = ({
           />
 
           {/* Toe 1 */}
-          <ellipse cx="36" cy="18" rx="13" ry="11"
+          <ellipse cx={t1x} cy="18" rx="13" ry="11"
             fill={`url(#paw-grad-${variant})`}
             stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" />
           {/* Toe 2 */}
-          <ellipse cx="62" cy="11" rx="13" ry="11"
+          <ellipse cx={t2x} cy="11" rx="13" ry="11"
             fill={`url(#paw-grad-${variant})`}
             stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" />
           {/* Toe 3 */}
-          <ellipse cx="98" cy="11" rx="13" ry="11"
+          <ellipse cx={t3x} cy="11" rx="13" ry="11"
             fill={`url(#paw-grad-${variant})`}
             stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" />
           {/* Toe 4 */}
-          <ellipse cx="124" cy="18" rx="13" ry="11"
+          <ellipse cx={t4x} cy="18" rx="13" ry="11"
             fill={`url(#paw-grad-${variant})`}
             stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" />
 
           {/* Button label text */}
           <text
-            x="80" y="51"
+            x={cx} y="51"
             textAnchor="middle"
             dominantBaseline="middle"
             fill={v.text}
-            fontSize="18"
+            fontSize={width > 160 ? "17" : "18"}
             fontFamily="Inter, -apple-system, sans-serif"
             fontWeight="600"
             style={{ pointerEvents: 'none', userSelect: 'none' }}
@@ -137,7 +146,7 @@ export const PawButton: React.FC<PawButtonProps> = ({
 
           {/* Inner highlight stroke for glass feel */}
           <rect
-            x="15" y="19" width="130" height="52"
+            x="15" y="19" width={padWidth - 2} height="52"
             rx="26" ry="26"
             fill="none"
             stroke="rgba(255,255,255,0.30)"

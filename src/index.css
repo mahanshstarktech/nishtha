@@ -17,9 +17,9 @@
   --color-mint: #C4F0E8;
 
   /* Glass surfaces */
-  --color-glass: rgba(255,255,255,0.55);
-  --color-glass-border: rgba(255,255,255,0.4);
-  --color-glass-hover: rgba(255,255,255,0.72);
+  --color-glass: rgba(255, 255, 255, 0.55);
+  --color-glass-border: rgba(255, 255, 255, 0.4);
+  --color-glass-hover: rgba(255, 255, 255, 0.72);
 
   /* Text */
   --color-ink: #1a1a2e;
@@ -36,13 +36,15 @@
   --radius-pill: 999px;
 
   /* Shadows */
-  --shadow-glass: 0 8px 32px rgba(120,80,200,0.10), 0 2px 8px rgba(120,80,200,0.06), inset 0 1px 0 rgba(255,255,255,0.5);
-  --shadow-glass-hover: 0 16px 48px rgba(120,80,200,0.18), 0 4px 12px rgba(120,80,200,0.10), inset 0 1px 0 rgba(255,255,255,0.6);
-  --shadow-button: 0 4px 16px rgba(168,85,247,0.20), 0 1px 4px rgba(168,85,247,0.10);
+  --shadow-glass: 0 8px 32px rgba(120, 80, 200, 0.10), 0 2px 8px rgba(120, 80, 200, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  --shadow-glass-hover: 0 16px 48px rgba(120, 80, 200, 0.18), 0 4px 12px rgba(120, 80, 200, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-button: 0 4px 16px rgba(168, 85, 247, 0.20), 0 1px 4px rgba(168, 85, 247, 0.10);
 }
 
 /* ── Base Reset ─────────────────────────────────────────────── */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -51,7 +53,8 @@
 html {
   font-family: var(--font-sans);
   color: var(--color-ink);
-  scroll-behavior: auto; /* Lenis handles smooth scroll */
+  scroll-behavior: auto;
+  /* Lenis handles smooth scroll */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -64,13 +67,11 @@ body {
 
 /* ── Gradient Text Shimmer ──────────────────────────────────── */
 .gradient-text {
-  background: linear-gradient(
-    135deg,
-    var(--color-grad-pink) 0%,
-    var(--color-grad-purple) 35%,
-    var(--color-grad-blue) 65%,
-    var(--color-grad-pink) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--color-grad-pink) 0%,
+      var(--color-grad-purple) 35%,
+      var(--color-grad-blue) 65%,
+      var(--color-grad-pink) 100%);
   background-size: 300% 300%;
   -webkit-background-clip: text;
   background-clip: text;
@@ -80,9 +81,17 @@ body {
 }
 
 @keyframes shimmer {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* ── Glass Card ─────────────────────────────────────────────── */
@@ -113,10 +122,21 @@ body {
 }
 
 @keyframes blob-drift {
-  0%   { transform: translate(0, 0) scale(1); }
-  33%  { transform: translate(var(--tx1, 40px), var(--ty1, -30px)) scale(1.08); }
-  66%  { transform: translate(var(--tx2, -30px), var(--ty2, 50px)) scale(0.94); }
-  100% { transform: translate(var(--tx3, 20px), var(--ty3, -40px)) scale(1.04); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate(var(--tx1, 40px), var(--ty1, -30px)) scale(1.08);
+  }
+
+  66% {
+    transform: translate(var(--tx2, -30px), var(--ty2, 50px)) scale(0.94);
+  }
+
+  100% {
+    transform: translate(var(--tx3, 20px), var(--ty3, -40px)) scale(1.04);
+  }
 }
 
 /* ── Section Layout ─────────────────────────────────────────── */
@@ -137,17 +157,42 @@ body {
 }
 
 @keyframes bounce-hint {
-  0%, 100% { transform: translateY(0); opacity: 0.7; }
-  50%       { transform: translateY(10px); opacity: 1; }
+
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: translateY(10px);
+    opacity: 1;
+  }
 }
 
 /* ── Cat dance animation ─────────────────────────────────────── */
 @keyframes cat-dance {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  20%       { transform: translateY(-14px) rotate(-4deg); }
-  40%       { transform: translateY(-8px) rotate(3deg); }
-  60%       { transform: translateY(-16px) rotate(-3deg); }
-  80%       { transform: translateY(-6px) rotate(4deg); }
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  20% {
+    transform: translateY(-14px) rotate(-4deg);
+  }
+
+  40% {
+    transform: translateY(-8px) rotate(3deg);
+  }
+
+  60% {
+    transform: translateY(-16px) rotate(-3deg);
+  }
+
+  80% {
+    transform: translateY(-6px) rotate(4deg);
+  }
 }
 
 .cat-dance {
@@ -187,14 +232,25 @@ body {
 }
 
 .food-card.selected {
-  border-color: rgba(168,85,247,0.6) !important;
-  background: rgba(168,85,247,0.12) !important;
+  border-color: rgba(168, 85, 247, 0.6) !important;
+  background: rgba(168, 85, 247, 0.12) !important;
 }
 
 /* ── Reduced motion ──────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .gradient-text    { animation: none; }
-  .blob             { animation: none; }
-  .scroll-hint      { animation: none; }
-  .cat-dance        { animation: none; }
+  .gradient-text {
+    animation: none;
+  }
+
+  .blob {
+    animation: none;
+  }
+
+  .scroll-hint {
+    animation: none;
+  }
+
+  .cat-dance {
+    animation: none;
+  }
 }
